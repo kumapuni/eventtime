@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Timekeeper</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #000;
+        color: #fff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 16px;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 460px;
+        border: 1px solid #2b2b2b;
+        border-radius: 14px;
+        background: #0a0a0a;
+        padding: 16px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        text-align: center;
+        font-size: clamp(1.2rem, 6vw, 1.6rem);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      input[type="time"] {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid #3a3a3a;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 1.1rem;
+        background: #121212;
+        color: #fff;
+      }
+
+      button {
+        min-height: 46px;
+        border: 0;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-size: 1rem;
+        font-weight: 700;
+        background: #fff;
+        color: #000;
+      }
+
+      .card {
+        border: 1px solid #2b2b2b;
+        background: #111;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+
+      .label {
+        color: #a8a8a8;
+        font-size: 0.85rem;
+      }
+
+      .value {
+        margin-top: 6px;
+        font-size: clamp(1.6rem, 8vw, 2.4rem);
+        line-height: 1.2;
+        font-weight: 800;
+        word-break: break-word;
+      }
+
+      .late {
+        color: #ff8484;
+      }
+
+      .early {
+        color: #7dff9f;
+      }
+
+      .status {
+        margin-top: 8px;
+        color: #c8c8c8;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <h1>Event Timekeeper</h1>
+
+      <div class="controls">
+        <input id="targetTime" type="time" step="1" aria-label="Target time" />
+        <button id="nowButton" type="button">Now</button>
+      </div>
+
+      <section class="card">
+        <div class="label">Current time</div>
+        <div class="value" id="currentTime">--:--:--</div>
+      </section>
+
+      <section class="card">
+        <div class="label">Difference from entered time</div>
+        <div class="value" id="difference">--</div>
+        <div class="status" id="status">Enter a time.</div>
+      </section>
+    </main>
+
+    <script>
+      const currentTimeEl = document.getElementById("currentTime");
+      const differenceEl = document.getElementById("difference");
+      const statusEl = document.getElementById("status");
+      const targetTimeInput = document.getElementById("targetTime");
+      const nowButton = document.getElementById("nowButton");
+
+      function pad(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function formatTime(date) {
+        return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+      }
+
+      function formatDifference(totalSeconds) {
+        const abs = Math.abs(totalSeconds);
+        const hours = Math.floor(abs / 3600);
+        const minutes = Math.floor((abs % 3600) / 60);
+        const seconds = abs % 60;
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      }
+
+      function parseTargetDate(timeText) {
+        if (!timeText) return null;
+        const [h, m, s = "0"] = timeText.split(":");
+        if (h === undefined || m === undefined) return null;
+
+        const target = new Date();
+        target.setHours(Number(h), Number(m), Number(s), 0);
+        return target;
+      }
+
+      function updateDisplay() {
+        const now = new Date();
+        currentTimeEl.textContent = formatTime(now);
+
+        const target = parseTargetDate(targetTimeInput.value);
+        if (!target) {
+          differenceEl.textContent = "--";
+          differenceEl.className = "value";
+          statusEl.textContent = "Enter a time.";
+          return;
+        }
+
+        const diffSeconds = Math.trunc((now.getTime() - target.getTime()) / 1000);
+        const text = formatDifference(diffSeconds);
+
+        if (diffSeconds > 0) {
+          differenceEl.textContent = `+${text}`;
+          differenceEl.className = "value late";
+          statusEl.textContent = "Current time is after the entered time.";
+        } else if (diffSeconds < 0) {
+          differenceEl.textContent = `-${text}`;
+          differenceEl.className = "value early";
+          statusEl.textContent = "Current time is before the entered time.";
+        } else {
+          differenceEl.textContent = "00:00:00";
+          differenceEl.className = "value";
+          statusEl.textContent = "Current time matches the entered time.";
+        }
+      }
+
+      nowButton.addEventListener("click", () => {
+        const now = new Date();
+        targetTimeInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        updateDisplay();
+      });
+
+      targetTimeInput.addEventListener("input", updateDisplay);
+
+      updateDisplay();
+      setInterval(updateDisplay, 1000);
+    </script>
+  </body>
+</html>
