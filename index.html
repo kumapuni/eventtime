@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Event Timekeeper</title>
-  <meta name="description" content="現在時刻と入力時刻の誤差を表示するタイムキーパー用Webアプリ" />
+
   <style>
     :root {
       color-scheme: dark;
@@ -213,8 +213,8 @@
       margin: 8px 0 6px;
     }
 
-    .diff.positive { color: var(--good); }
-    .diff.negative { color: var(--bad); }
+    .diff.positive { color: var(--bad); }
+    .diff.negative { color: var(--good); }
 
     .summary {
       display: grid;
@@ -254,7 +254,7 @@
     <header class="hero">
       <p class="eyebrow">Event Timekeeper</p>
       <h1>現在時刻との誤差を表示</h1>
-      <p class="subtitle">スマホでもパソコンでも見やすい、タイムキーパー向けのシンプルな時間差表示アプリです。</p>
+
     </header>
 
     <section class="content">
@@ -294,14 +294,9 @@
           <div class="summary-label">表示ルール</div>
           <div class="summary-value">プラスは現在時刻が入力時刻を過ぎた状態、マイナスはまだ前の状態です。</div>
         </div>
-        <div class="summary-card">
-          <div class="summary-label">Font</div>
-          <div class="summary-value">数字表示は DIN Next 優先、未対応環境では近い代替フォントにフォールバックします。</div>
-        </div>
       </section>
     </section>
 
-    <p class="footer-note">GitHub Pages でそのまま公開できる静的サイトです。</p>
   </main>
 
   <script>
