@@ -166,7 +166,7 @@
       }
 
       function parseTargetToday(value, now) {
-        const [hours, minutes, seconds = '0'] = value.split(':');
+        const [hours, minutes, seconds = 0] = value.split(':');
         const target = new Date(now);
         target.setHours(Number(hours), Number(minutes), Number(seconds), 0);
         return target;
@@ -180,7 +180,7 @@
         return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
       }
 
-      function update() {
+      function updateTimeDifference() {
         const now = new Date();
         nowTimeEl.textContent = formatClock(now);
 
@@ -210,9 +210,9 @@
         }
       }
 
-      targetTimeEl.addEventListener('input', update);
-      update();
-      setInterval(update, 1000);
+      targetTimeEl.addEventListener('input', updateTimeDifference);
+      updateTimeDifference();
+      setInterval(updateTimeDifference, 1000);
     </script>
   </body>
 </html>
