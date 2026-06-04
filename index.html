@@ -99,11 +99,11 @@
         font-size: clamp(0.95rem, 0.88rem + 0.34vw, 1.08rem);
       }
 
-      .ahead {
+      .early {
         color: #7ef59e;
       }
 
-      .behind {
+      .late {
         color: #ff8d8d;
       }
 
@@ -197,11 +197,11 @@
 
         if (diffMs > 0) {
           diffEl.textContent = `+${absDiff}`;
-          diffEl.className = 'diff time-font behind';
+          diffEl.className = 'diff time-font late';
           statusEl.textContent = 'Now is ahead of the target.';
         } else if (diffMs < 0) {
           diffEl.textContent = `-${absDiff}`;
-          diffEl.className = 'diff time-font ahead';
+          diffEl.className = 'diff time-font early';
           statusEl.textContent = 'Now is behind the target.';
         } else {
           diffEl.textContent = '00:00:00';
