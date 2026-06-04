@@ -1,391 +1,409 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event Timekeeper</title>
-    <style>
-      :root {
-        color-scheme: dark;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Event Timekeeper</title>
+  <meta name="description" content="現在時刻と入力時刻の誤差を表示するタイムキーパー用Webアプリ" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000;
+      --panel: #0d0d0d;
+      --panel-2: #121212;
+      --line: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #a6a6a6;
+      --accent: #7dd3fc;
+      --good: #7dff9b;
+      --bad: #ff7d7d;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
 
-      * {
-        box-sizing: border-box;
-      }
+    * { box-sizing: border-box; }
 
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: #000;
-        color: #f5f5f5;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-      .app {
-        width: min(860px, 100%);
-        padding: clamp(16px, 4vw, 32px);
-      }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
 
-      h1 {
-        margin: 0 0 0.9rem;
-        font-size: clamp(1.2rem, 1rem + 1.1vw, 1.8rem);
-        font-weight: 700;
-        text-align: center;
-        letter-spacing: 0.02em;
-      }
+    .app {
+      width: min(960px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
 
-      .panel {
-        display: grid;
-        gap: 14px;
-        grid-template-columns: 1fr;
-      }
+    .hero {
+      padding: 24px 20px 12px;
+      border-bottom: 1px solid var(--line);
+      background: radial-gradient(circle at top, rgba(125, 211, 252, 0.10), transparent 45%);
+      text-align: center;
+    }
 
-      .card {
-        background: #0b0b0b;
-        border: 1px solid #252525;
-        border-radius: 14px;
-        padding: clamp(14px, 2.8vw, 22px);
-      }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-      .label {
-        margin: 0 0 0.5rem;
-        color: #bdbdbd;
-        font-size: clamp(0.78rem, 0.73rem + 0.2vw, 0.9rem);
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.05;
+    }
 
-      .time-font {
-        font-family: "DIN Next", "DINNextLTPro-Regular", Bahnschrift, "Roboto Mono", "SFMono-Regular", ui-monospace, monospace;
-        font-variant-numeric: tabular-nums;
-      }
+    .subtitle {
+      margin: 12px auto 0;
+      max-width: 42em;
+      color: var(--muted);
+      font-size: clamp(14px, 2.5vw, 18px);
+      line-height: 1.6;
+    }
 
-      .now {
-        margin: 0;
-        font-size: clamp(2rem, 1.3rem + 3.2vw, 3.2rem);
-        line-height: 1.05;
-        letter-spacing: 0.04em;
-        overflow-wrap: anywhere;
-      }
+    .content {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
 
-      .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        background: #000;
-        color: #fff;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 16px;
-      }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
 
-      .app {
-        width: 100%;
-        max-width: 460px;
-        border: 1px solid #2b2b2b;
-        border-radius: 14px;
-        background: #0a0a0a;
-        padding: 16px;
-      }
+    @media (min-width: 760px) {
+      .content { padding: 20px; }
+      .grid { grid-template-columns: 0.95fr 1.05fr; align-items: stretch; }
+    }
 
-      h1 {
-        margin: 0 0 12px;
-        text-align: center;
-        font-size: clamp(1.2rem, 6vw, 1.6rem);
-      }
+    .panel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+    }
 
-      .controls {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 10px;
-        margin-bottom: 14px;
-      }
+    .panel-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
 
-      input[type="time"] {
-        width: 100%;
-        min-height: 50px;
-        border: 1px solid #3a3a3a;
-        border-radius: 10px;
-        padding: 10px 12px;
-        background: #111;
-        color: #fff;
-        font-size: clamp(1.1rem, 0.9rem + 1vw, 1.55rem);
-      }
+    .time-display {
+      font-family: "DIN Next", "DIN 2014", "Avenir Next Condensed", "Helvetica Neue Condensed", "Roboto Condensed", system-ui, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
 
-      .diff {
-        margin: 0;
-        font-size: clamp(1.9rem, 1.2rem + 3vw, 3rem);
-        line-height: 1.08;
-        letter-spacing: 0.02em;
-      }
+    .now-time {
+      font-size: clamp(38px, 11vw, 78px);
+      font-weight: 700;
+      line-height: 1;
+      margin: 6px 0 2px;
+    }
 
-      .status {
-        margin: 0.4rem 0 0;
-        font-size: clamp(0.95rem, 0.88rem + 0.34vw, 1.08rem);
-      }
+    .date-line {
+      color: var(--muted);
+      font-size: 14px;
+    }
 
-      .early {
-        color: #7ef59e;
-      }
+    .input-row {
+      display: grid;
+      gap: 12px;
+    }
 
-      .late {
-        color: #ff8d8d;
-      }
+    label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
 
-      @media (min-width: 760px) {
-        .panel {
-          grid-template-columns: 1fr 1fr;
-        }
+    input[type="time"] {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #090909;
+      color: var(--text);
+      padding: 16px 14px;
+      font-size: 20px;
+      line-height: 1;
+      min-height: 56px;
+      outline: none;
+    }
 
-        .card.full {
-          grid-column: 1 / -1;
-        }
+    input[type="time"]:focus {
+      border-color: rgba(125, 211, 252, 0.8);
+      box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.12);
+    }
 
-        .controls {
-          flex-direction: row;
-          align-items: center;
-        }
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
 
-        input[type="time"] {
-          max-width: 270px;
-        }
-        min-height: 46px;
-        border: 1px solid #3a3a3a;
-        border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 1.1rem;
-        background: #121212;
-        color: #fff;
-      }
+    button {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 15px 14px;
+      background: #111;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      min-height: 54px;
+      cursor: pointer;
+    }
 
-      button {
-        min-height: 46px;
-        border: 0;
-        border-radius: 10px;
-        padding: 0 16px;
-        font-size: 1rem;
-        font-weight: 700;
-        background: #fff;
-        color: #000;
-      }
+    button.primary {
+      background: var(--text);
+      color: #000;
+      border-color: transparent;
+    }
 
-      .card {
-        border: 1px solid #2b2b2b;
-        background: #111;
-        border-radius: 12px;
-        padding: 12px;
-        margin-top: 10px;
-      }
+    button:active {
+      transform: translateY(1px);
+    }
 
-      .label {
-        color: #a8a8a8;
-        font-size: 0.85rem;
-      }
+    .target-wrap {
+      display: grid;
+      gap: 10px;
+    }
 
-      .value {
-        margin-top: 6px;
-        font-size: clamp(1.6rem, 8vw, 2.4rem);
-        line-height: 1.2;
-        font-weight: 800;
-        word-break: break-word;
-      }
+    .target-time {
+      font-size: clamp(30px, 8vw, 60px);
+      font-weight: 700;
+      line-height: 1;
+    }
 
-      .late {
-        color: #ff8484;
-      }
+    .status {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
 
-      .early {
-        color: #7dff9f;
-      }
+    .diff {
+      font-size: clamp(36px, 9vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      margin: 8px 0 6px;
+    }
 
-      .status {
-        margin-top: 8px;
-        color: #c8c8c8;
-        font-size: 0.9rem;
-      }
-    </style>
-  </head>
-  <body>
-    <main class="app">
-      <h1>Event Timekeeper</h1>
-      <section class="panel">
-        <article class="card full">
-          <p class="label">Target Time</p>
-          <div class="controls">
-            <input id="target-time" class="time-font" type="time" step="1" aria-label="Target time" />
+    .diff.positive { color: var(--good); }
+    .diff.negative { color: var(--bad); }
+
+    .summary {
+      display: grid;
+      gap: 12px;
+    }
+
+    .summary-card {
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 0 18px 18px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">Event Timekeeper</p>
+      <h1>現在時刻との誤差を表示</h1>
+      <p class="subtitle">スマホでもパソコンでも見やすい、タイムキーパー向けのシンプルな時間差表示アプリです。</p>
+    </header>
+
+    <section class="content">
+      <div class="grid">
+        <section class="panel">
+          <h2 class="panel-title">Current Time</h2>
+          <div class="time-display">
+            <div id="nowTime" class="now-time">--:--:--</div>
+            <div id="nowDate" class="date-line">----</div>
           </div>
-        </article>
+        </section>
 
-        <article class="card">
-          <p class="label">Current Time</p>
-          <p id="now-time" class="now time-font">--:--:--</p>
-        </article>
-
-        <article class="card">
-          <p class="label">Difference</p>
-          <p id="time-diff" class="diff time-font">--</p>
-          <p id="status" class="status">Enter a target time.</p>
-        </article>
-
-      <div class="controls">
-        <input id="targetTime" type="time" step="1" aria-label="Target time" />
-        <button id="nowButton" type="button">Now</button>
+        <section class="panel">
+          <h2 class="panel-title">Target Time</h2>
+          <div class="input-row">
+            <div>
+              <label for="targetTime">入力時刻</label>
+              <input id="targetTime" type="time" step="1" inputmode="numeric" />
+            </div>
+            <div class="buttons">
+              <button id="startBtn" class="primary" type="button">開始</button>
+              <button id="resetBtn" type="button">停止</button>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <section class="card">
-        <div class="label">Current time</div>
-        <div class="value" id="currentTime">--:--:--</div>
+      <section class="panel target-wrap">
+        <h2 class="panel-title">Difference</h2>
+        <div id="diff" class="time-display diff">--:--:--</div>
+        <div id="targetDisplay" class="time-display target-time">--:--:--</div>
+        <div id="status" class="status">時刻を入力して「開始」を押してください。</div>
       </section>
 
-      <section class="card">
-        <div class="label">Difference from entered time</div>
-        <div class="value" id="difference">--</div>
-        <div class="status" id="status">Enter a time.</div>
+      <section class="summary">
+        <div class="summary-card">
+          <div class="summary-label">表示ルール</div>
+          <div class="summary-value">プラスは現在時刻が入力時刻を過ぎた状態、マイナスはまだ前の状態です。</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Font</div>
+          <div class="summary-value">数字表示は DIN Next 優先、未対応環境では近い代替フォントにフォールバックします。</div>
+        </div>
       </section>
-    </main>
+    </section>
 
-    <script>
-      const nowTimeEl = document.getElementById('now-time');
-      const targetTimeEl = document.getElementById('target-time');
-      const diffEl = document.getElementById('time-diff');
-      const statusEl = document.getElementById('status');
+    <p class="footer-note">GitHub Pages でそのまま公開できる静的サイトです。</p>
+  </main>
 
-      function pad(value) {
-        return String(value).padStart(2, '0');
-      }
+  <script>
+    const nowTimeEl = document.getElementById('nowTime');
+    const nowDateEl = document.getElementById('nowDate');
+    const targetInput = document.getElementById('targetTime');
+    const targetDisplayEl = document.getElementById('targetDisplay');
+    const diffEl = document.getElementById('diff');
+    const statusEl = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
 
-      function formatClock(date) {
-        return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-      }
+    let timer = null;
 
-      function parseTargetToday(value, now) {
-        const [hours, minutes, seconds = 0] = value.split(':');
-        const target = new Date(now);
-        target.setHours(Number(hours), Number(minutes), Number(seconds), 0);
-        return target;
-      }
+    const pad = (n) => String(n).padStart(2, '0');
 
-      function formatDiff(ms) {
-        const totalSeconds = Math.floor(Math.abs(ms) / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-      }
+    function formatClock(date) {
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
 
-      function updateTimeDifference() {
-        const now = new Date();
-        nowTimeEl.textContent = formatClock(now);
-
-        if (!targetTimeEl.value) {
-          diffEl.textContent = '--';
-          diffEl.className = 'diff time-font';
-          statusEl.textContent = 'Enter a target time.';
-          return;
-        }
-
-        const target = parseTargetToday(targetTimeEl.value, now);
-        const diffMs = now.getTime() - target.getTime();
-        const absDiff = formatDiff(diffMs);
-
-        if (diffMs > 0) {
-          diffEl.textContent = `+${absDiff}`;
-          diffEl.className = 'diff time-font late';
-          statusEl.textContent = 'Now is ahead of the target.';
-        } else if (diffMs < 0) {
-          diffEl.textContent = `-${absDiff}`;
-          diffEl.className = 'diff time-font early';
-          statusEl.textContent = 'Now is behind the target.';
-        } else {
-          diffEl.textContent = '00:00:00';
-          diffEl.className = 'diff time-font';
-          statusEl.textContent = 'Exactly on time.';
-        }
-      }
-
-      targetTimeEl.addEventListener('input', updateTimeDifference);
-      updateTimeDifference();
-      setInterval(updateTimeDifference, 1000);
-      const currentTimeEl = document.getElementById("currentTime");
-      const differenceEl = document.getElementById("difference");
-      const statusEl = document.getElementById("status");
-      const targetTimeInput = document.getElementById("targetTime");
-      const nowButton = document.getElementById("nowButton");
-
-      function pad(value) {
-        return String(value).padStart(2, "0");
-      }
-
-      function formatTime(date) {
-        return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-      }
-
-      function formatDifference(totalSeconds) {
-        const abs = Math.abs(totalSeconds);
-        const hours = Math.floor(abs / 3600);
-        const minutes = Math.floor((abs % 3600) / 60);
-        const seconds = abs % 60;
-        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-      }
-
-      function parseTargetDate(timeText) {
-        if (!timeText) return null;
-        const [h, m, s = "0"] = timeText.split(":");
-        if (h === undefined || m === undefined) return null;
-
-        const target = new Date();
-        target.setHours(Number(h), Number(m), Number(s), 0);
-        return target;
-      }
-
-      function updateDisplay() {
-        const now = new Date();
-        currentTimeEl.textContent = formatTime(now);
-
-        const target = parseTargetDate(targetTimeInput.value);
-        if (!target) {
-          differenceEl.textContent = "--";
-          differenceEl.className = "value";
-          statusEl.textContent = "Enter a time.";
-          return;
-        }
-
-        const diffSeconds = Math.trunc((now.getTime() - target.getTime()) / 1000);
-        const text = formatDifference(diffSeconds);
-
-        if (diffSeconds > 0) {
-          differenceEl.textContent = `+${text}`;
-          differenceEl.className = "value late";
-          statusEl.textContent = "Current time is after the entered time.";
-        } else if (diffSeconds < 0) {
-          differenceEl.textContent = `-${text}`;
-          differenceEl.className = "value early";
-          statusEl.textContent = "Current time is before the entered time.";
-        } else {
-          differenceEl.textContent = "00:00:00";
-          differenceEl.className = "value";
-          statusEl.textContent = "Current time matches the entered time.";
-        }
-      }
-
-      nowButton.addEventListener("click", () => {
-        const now = new Date();
-        targetTimeInput.value = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        updateDisplay();
+    function formatDate(date) {
+      return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
       });
+    }
 
-      targetTimeInput.addEventListener("input", updateDisplay);
+    function formatDuration(ms) {
+      const total = Math.floor(Math.abs(ms) / 1000);
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const seconds = total % 60;
+      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
 
-      updateDisplay();
-      setInterval(updateDisplay, 1000);
-    </script>
-  </body>
+    function getTargetDate(now) {
+      const value = targetInput.value;
+      if (!value) return null;
+      const [h, m, s = '0'] = value.split(':').map(Number);
+      const target = new Date(now);
+      target.setHours(h, m, Number(s), 0);
+      return target;
+    }
+
+    function update() {
+      const now = new Date();
+      nowTimeEl.textContent = formatClock(now);
+      nowDateEl.textContent = formatDate(now);
+
+      const target = getTargetDate(now);
+      if (!target) {
+        diffEl.textContent = '--:--:--';
+        diffEl.className = 'time-display diff';
+        targetDisplayEl.textContent = '--:--:--';
+        statusEl.textContent = '時刻を入力して「開始」を押してください。';
+        return;
+      }
+
+      targetDisplayEl.textContent = formatClock(target);
+
+      const diffMs = now - target;
+      const formatted = formatDuration(diffMs);
+
+      if (diffMs > 0) {
+        diffEl.textContent = `+ ${formatted}`;
+        diffEl.className = 'time-display diff positive';
+        statusEl.textContent = '現在時刻が入力時刻を過ぎています。';
+      } else if (diffMs < 0) {
+        diffEl.textContent = `- ${formatted}`;
+        diffEl.className = 'time-display diff negative';
+        statusEl.textContent = '現在時刻はまだ入力時刻前です。';
+      } else {
+        diffEl.textContent = '± 00:00:00';
+        diffEl.className = 'time-display diff';
+        statusEl.textContent = '現在時刻と入力時刻が一致しています。';
+      }
+    }
+
+    function start() {
+      stop();
+      update();
+      timer = window.setInterval(update, 1000);
+    }
+
+    function stop() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+      statusEl.textContent = '停止中です。';
+    }
+
+    startBtn.addEventListener('click', start);
+    resetBtn.addEventListener('click', stop);
+    targetInput.addEventListener('change', update);
+    targetInput.addEventListener('input', () => {
+      if (timer !== null) update();
+    });
+
+    update();
+  </script>
+</body>
 </html>
