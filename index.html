@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Event Timekeeper</title>
+  <meta name="description" content="現在時刻と入力時刻の誤差を表示するタイムキーパー用Webアプリ" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000000;
+      --panel: #0d0d0d;
+      --panel-2: #121212;
+      --line: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #a6a6a6;
+      --accent: #7dd3fc;
+      --good: #7dff9b;
+      --bad: #ff7d7d;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      padding: 24px 20px 12px;
+      border-bottom: 1px solid var(--line);
+      background: radial-gradient(circle at top, rgba(125, 211, 252, 0.10), transparent 45%);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin: 12px auto 0;
+      max-width: 42em;
+      color: var(--muted);
+      font-size: clamp(14px, 2.5vw, 18px);
+      line-height: 1.6;
+    }
+
+    .content {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 760px) {
+      .content { padding: 20px; }
+      .grid { grid-template-columns: 0.95fr 1.05fr; align-items: stretch; }
+    }
+
+    .panel {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .time-display {
+      font-family: "DIN Next", "DIN 2014", "Avenir Next Condensed", "Helvetica Neue Condensed", "Roboto Condensed", system-ui, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    .now-time {
+      font-size: clamp(38px, 11vw, 78px);
+      font-weight: 700;
+      line-height: 1;
+      margin: 6px 0 2px;
+    }
+
+    .date-line {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .input-row {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="time"] {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #090909;
+      color: var(--text);
+      padding: 16px 14px;
+      font-size: 20px;
+      line-height: 1;
+      min-height: 56px;
+      outline: none;
+    }
+
+    input[type="time"]:focus {
+      border-color: rgba(125, 211, 252, 0.8);
+      box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.12);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 15px 14px;
+      background: #111;
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 700;
+      min-height: 54px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--text);
+      color: #000;
+      border-color: transparent;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .target-wrap {
+      display: grid;
+      gap: 10px;
+    }
+
+    .target-time {
+      font-size: clamp(30px, 8vw, 60px);
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .status {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .diff {
+      font-size: clamp(36px, 9vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      margin: 8px 0 6px;
+    }
+
+    .diff.positive { color: var(--good); }
+    .diff.negative { color: var(--bad); }
+
+    .summary {
+      display: grid;
+      gap: 12px;
+    }
+
+    .summary-card {
+      border-radius: 16px;
+      padding: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .summary-value {
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 0 18px 18px;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">Event Timekeeper</p>
+      <h1>現在時刻との誤差を表示</h1>
+      <p class="subtitle">スマホでもパソコンでも見やすい、タイムキーパー向けのシンプルな時間差表示アプリです。</p>
+    </header>
+
+    <section class="content">
+      <div class="grid">
+        <section class="panel">
+          <h2 class="panel-title">Current Time</h2>
+          <div class="time-display">
+            <div id="nowTime" class="now-time">--:--:--</div>
+            <div id="nowDate" class="date-line">----</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">Target Time</h2>
+          <div class="input-row">
+            <div>
+              <label for="targetTime">入力時刻</label>
+              <input id="targetTime" type="time" step="1" inputmode="numeric" />
+            </div>
+            <div class="buttons">
+              <button id="startBtn" class="primary" type="button">開始</button>
+              <button id="resetBtn" type="button">停止</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel target-wrap">
+        <h2 class="panel-title">Difference</h2>
+        <div id="diff" class="time-display diff">--:--:--</div>
+        <div id="targetDisplay" class="time-display target-time">--:--:--</div>
+        <div id="status" class="status">時刻を入力して「開始」を押してください。</div>
+      </section>
+
+      <section class="summary">
+        <div class="summary-card">
+          <div class="summary-label">表示ルール</div>
+          <div class="summary-value">プラスは現在時刻が入力時刻を過ぎた状態、マイナスはまだ前の状態です。</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Font</div>
+          <div class="summary-value">数字部分は DIN Next 優先、未対応環境では近い代替フォントにフォールバックします。</div>
+        </div>
+      </section>
+    </section>
+
+    <p class="footer-note">GitHub Pages でそのまま公開できる静的サイトです。</p>
+  </main>
+
+  <script>
+    const nowTimeEl = document.getElementById('nowTime');
+    const nowDateEl = document.getElementById('nowDate');
+    const targetInput = document.getElementById('targetTime');
+    const targetDisplayEl = document.getElementById('targetDisplay');
+    const diffEl = document.getElementById('diff');
+    const statusEl = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let timer = null;
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    function formatClock(date) {
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('ja-JP', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+      });
+    }
+
+    function formatDuration(ms) {
+      const total = Math.floor(Math.abs(ms) / 1000);
+      const hours = Math.floor(total / 3600);
+      const minutes = Math.floor((total % 3600) / 60);
+      const seconds = total % 60;
+      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
+
+    function getTargetDate(now) {
+      const value = targetInput.value;
+      if (!value) return null;
+      const [h, m, s = '0'] = value.split(':').map(Number);
+      const target = new Date(now);
+      target.setHours(h, m, Number(s), 0);
+      return target;
+    }
+
+    function update() {
+      const now = new Date();
+      nowTimeEl.textContent = formatClock(now);
+      nowDateEl.textContent = formatDate(now);
+
+      const target = getTargetDate(now);
+      if (!target) {
+        diffEl.textContent = '--:--:--';
+        diffEl.className = 'time-display diff';
+        targetDisplayEl.textContent = '--:--:--';
+        statusEl.textContent = '時刻を入力して「開始」を押してください。';
+        return;
+      }
+
+      targetDisplayEl.textContent = formatClock(target);
+
+      const diffMs = now - target;
+      const formatted = formatDuration(diffMs);
+
+      if (diffMs > 0) {
+        diffEl.textContent = `+ ${formatted}`;
+        diffEl.className = 'time-display diff positive';
+        statusEl.textContent = '現在時刻が入力時刻を過ぎています。';
+      } else if (diffMs < 0) {
+        diffEl.textContent = `- ${formatted}`;
+        diffEl.className = 'time-display diff negative';
+        statusEl.textContent = '現在時刻はまだ入力時刻前です。';
+      } else {
+        diffEl.textContent = '± 00:00:00';
+        diffEl.className = 'time-display diff';
+        statusEl.textContent = '現在時刻と入力時刻が一致しています。';
+      }
+    }
+
+    function start() {
+      stop();
+      update();
+      timer = window.setInterval(update, 1000);
+    }
+
+    function stop() {
+      if (timer !== null) {
+        clearInterval(timer);
+        timer = null;
+      }
+      statusEl.textContent = '停止中です。';
+    }
+
+    startBtn.addEventListener('click', start);
+    resetBtn.addEventListener('click', stop);
+    targetInput.addEventListener('change', update);
+    targetInput.addEventListener('input', () => {
+      if (timer !== null) update();
+    });
+
+    update();
+  </script>
+</body>
+</html>
