@@ -12,10 +12,10 @@ Site URL:
 
 ## Local preview
 
-Open `/tmp/workspace/kumapuni/eventtime/index.html` in your browser, or run a static server:
+Open `index.html` in your browser, or run a static server:
 
 ```bash
-cd /tmp/workspace/kumapuni/eventtime
+cd <project-directory>
 python3 -m http.server 8000
 ```
 
