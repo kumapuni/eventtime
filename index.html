@@ -1,4 +1,8 @@
 <!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
@@ -16,6 +20,64 @@
       body {
         margin: 0;
         min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #000;
+        color: #f5f5f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      .app {
+        width: min(860px, 100%);
+        padding: clamp(16px, 4vw, 32px);
+      }
+
+      h1 {
+        margin: 0 0 0.9rem;
+        font-size: clamp(1.2rem, 1rem + 1.1vw, 1.8rem);
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+
+      .panel {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        background: #0b0b0b;
+        border: 1px solid #252525;
+        border-radius: 14px;
+        padding: clamp(14px, 2.8vw, 22px);
+      }
+
+      .label {
+        margin: 0 0 0.5rem;
+        color: #bdbdbd;
+        font-size: clamp(0.78rem, 0.73rem + 0.2vw, 0.9rem);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .time-font {
+        font-family: "DIN Next", "DINNextLTPro-Regular", Bahnschrift, "Roboto Mono", "SFMono-Regular", ui-monospace, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .now {
+        margin: 0;
+        font-size: clamp(2rem, 1.3rem + 3.2vw, 3.2rem);
+        line-height: 1.05;
+        letter-spacing: 0.04em;
+        overflow-wrap: anywhere;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
         background: #000;
         color: #fff;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -49,6 +111,52 @@
 
       input[type="time"] {
         width: 100%;
+        min-height: 50px;
+        border: 1px solid #3a3a3a;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #111;
+        color: #fff;
+        font-size: clamp(1.1rem, 0.9rem + 1vw, 1.55rem);
+      }
+
+      .diff {
+        margin: 0;
+        font-size: clamp(1.9rem, 1.2rem + 3vw, 3rem);
+        line-height: 1.08;
+        letter-spacing: 0.02em;
+      }
+
+      .status {
+        margin: 0.4rem 0 0;
+        font-size: clamp(0.95rem, 0.88rem + 0.34vw, 1.08rem);
+      }
+
+      .early {
+        color: #7ef59e;
+      }
+
+      .late {
+        color: #ff8d8d;
+      }
+
+      @media (min-width: 760px) {
+        .panel {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .card.full {
+          grid-column: 1 / -1;
+        }
+
+        .controls {
+          flex-direction: row;
+          align-items: center;
+        }
+
+        input[type="time"] {
+          max-width: 270px;
+        }
         min-height: 46px;
         border: 1px solid #3a3a3a;
         border-radius: 10px;
@@ -108,6 +216,24 @@
   <body>
     <main class="app">
       <h1>Event Timekeeper</h1>
+      <section class="panel">
+        <article class="card full">
+          <p class="label">Target Time</p>
+          <div class="controls">
+            <input id="target-time" class="time-font" type="time" step="1" aria-label="Target time" />
+          </div>
+        </article>
+
+        <article class="card">
+          <p class="label">Current Time</p>
+          <p id="now-time" class="now time-font">--:--:--</p>
+        </article>
+
+        <article class="card">
+          <p class="label">Difference</p>
+          <p id="time-diff" class="diff time-font">--</p>
+          <p id="status" class="status">Enter a target time.</p>
+        </article>
 
       <div class="controls">
         <input id="targetTime" type="time" step="1" aria-label="Target time" />
@@ -127,6 +253,67 @@
     </main>
 
     <script>
+      const nowTimeEl = document.getElementById('now-time');
+      const targetTimeEl = document.getElementById('target-time');
+      const diffEl = document.getElementById('time-diff');
+      const statusEl = document.getElementById('status');
+
+      function pad(value) {
+        return String(value).padStart(2, '0');
+      }
+
+      function formatClock(date) {
+        return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+      }
+
+      function parseTargetToday(value, now) {
+        const [hours, minutes, seconds = 0] = value.split(':');
+        const target = new Date(now);
+        target.setHours(Number(hours), Number(minutes), Number(seconds), 0);
+        return target;
+      }
+
+      function formatDiff(ms) {
+        const totalSeconds = Math.floor(Math.abs(ms) / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+      }
+
+      function updateTimeDifference() {
+        const now = new Date();
+        nowTimeEl.textContent = formatClock(now);
+
+        if (!targetTimeEl.value) {
+          diffEl.textContent = '--';
+          diffEl.className = 'diff time-font';
+          statusEl.textContent = 'Enter a target time.';
+          return;
+        }
+
+        const target = parseTargetToday(targetTimeEl.value, now);
+        const diffMs = now.getTime() - target.getTime();
+        const absDiff = formatDiff(diffMs);
+
+        if (diffMs > 0) {
+          diffEl.textContent = `+${absDiff}`;
+          diffEl.className = 'diff time-font late';
+          statusEl.textContent = 'Now is ahead of the target.';
+        } else if (diffMs < 0) {
+          diffEl.textContent = `-${absDiff}`;
+          diffEl.className = 'diff time-font early';
+          statusEl.textContent = 'Now is behind the target.';
+        } else {
+          diffEl.textContent = '00:00:00';
+          diffEl.className = 'diff time-font';
+          statusEl.textContent = 'Exactly on time.';
+        }
+      }
+
+      targetTimeEl.addEventListener('input', updateTimeDifference);
+      updateTimeDifference();
+      setInterval(updateTimeDifference, 1000);
       const currentTimeEl = document.getElementById("currentTime");
       const differenceEl = document.getElementById("difference");
       const statusEl = document.getElementById("status");
