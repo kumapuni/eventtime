@@ -4,20 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Event Timekeeper</title>
-
+  <meta name="description" content="タイムスケジュールを入力して、現在時刻に最も近い予定を比較表示するWebアプリ" />
   <style>
     :root {
       color-scheme: dark;
       --bg: #000;
-      --panel: #0d0d0d;
-      --panel-2: #121212;
+      --panel: #101010;
+      --panel-2: #151515;
       --line: #2a2a2a;
       --text: #f5f5f5;
-      --muted: #a6a6a6;
+      --muted: #a7a7a7;
       --accent: #7dd3fc;
       --good: #7dff9b;
       --bad: #ff7d7d;
-      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
     }
 
     * { box-sizing: border-box; }
@@ -32,31 +31,30 @@
 
     body {
       min-height: 100vh;
-      display: grid;
-      place-items: center;
       padding: 16px;
     }
 
     .app {
-      width: min(960px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      width: min(1100px, 100%);
+      margin: 0 auto;
       border: 1px solid var(--line);
       border-radius: 24px;
-      box-shadow: var(--shadow);
       overflow: hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
     }
 
     .hero {
-      padding: 24px 20px 12px;
+      padding: 24px 20px 16px;
       border-bottom: 1px solid var(--line);
-      background: radial-gradient(circle at top, rgba(125, 211, 252, 0.10), transparent 45%);
       text-align: center;
+      background: radial-gradient(circle at top, rgba(125, 211, 252, 0.12), transparent 45%);
     }
 
     .eyebrow {
       margin: 0 0 8px;
       color: var(--accent);
-      letter-spacing: 0.12em;
+      letter-spacing: .12em;
       text-transform: uppercase;
       font-size: 12px;
       font-weight: 700;
@@ -65,32 +63,27 @@
     h1 {
       margin: 0;
       font-size: clamp(28px, 5vw, 48px);
-      line-height: 1.05;
+      line-height: 1.1;
     }
 
     .subtitle {
       margin: 12px auto 0;
-      max-width: 42em;
+      max-width: 52em;
       color: var(--muted);
-      font-size: clamp(14px, 2.5vw, 18px);
+      font-size: clamp(14px, 2.3vw, 18px);
       line-height: 1.6;
     }
 
     .content {
       display: grid;
       gap: 16px;
-      padding: 18px;
+      padding: 16px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    @media (min-width: 760px) {
-      .content { padding: 20px; }
-      .grid { grid-template-columns: 0.95fr 1.05fr; align-items: stretch; }
+    @media (min-width: 900px) {
+      .content {
+        grid-template-columns: 1.1fr .9fr;
+      }
     }
 
     .panel {
@@ -104,57 +97,44 @@
       margin: 0 0 12px;
       font-size: 14px;
       color: var(--muted);
-      letter-spacing: 0.05em;
+      letter-spacing: .08em;
       text-transform: uppercase;
     }
 
-    .time-display {
-      font-family: "DIN Next", "DIN 2014", "Avenir Next Condensed", "Helvetica Neue Condensed", "Roboto Condensed", system-ui, sans-serif;
-      font-variant-numeric: tabular-nums;
-      font-feature-settings: "tnum" 1, "lnum" 1;
-      text-align: center;
-      letter-spacing: 0.04em;
-    }
-
-    .now-time {
-      font-size: clamp(38px, 11vw, 78px);
-      font-weight: 700;
-      line-height: 1;
-      margin: 6px 0 2px;
-    }
-
-    .date-line {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .input-row {
+    .field {
       display: grid;
-      gap: 12px;
+      gap: 8px;
+      margin-bottom: 12px;
     }
 
     label {
-      display: block;
       font-size: 14px;
       color: var(--muted);
-      margin-bottom: 8px;
     }
 
-    input[type="time"] {
+    input[type="text"], input[type="time"], textarea {
       width: 100%;
-      appearance: none;
       border: 1px solid var(--line);
-      border-radius: 16px;
+      border-radius: 14px;
       background: #090909;
       color: var(--text);
-      padding: 16px 14px;
-      font-size: 20px;
-      line-height: 1;
-      min-height: 56px;
+      padding: 14px;
+      font-size: 16px;
       outline: none;
     }
 
-    input[type="time"]:focus {
+    input[type="time"] {
+      min-height: 54px;
+      font-size: 18px;
+    }
+
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input:focus, textarea:focus {
       border-color: rgba(125, 211, 252, 0.8);
       box-shadow: 0 0 0 4px rgba(125, 211, 252, 0.12);
     }
@@ -163,17 +143,18 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      margin-top: 12px;
     }
 
     button {
       border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 15px 14px;
+      border-radius: 14px;
+      padding: 14px 16px;
       background: #111;
       color: var(--text);
       font-size: 16px;
       font-weight: 700;
-      min-height: 54px;
+      min-height: 52px;
       cursor: pointer;
     }
 
@@ -183,69 +164,136 @@
       border-color: transparent;
     }
 
-    button:active {
-      transform: translateY(1px);
+    .time-display {
+      font-family: "DIN Next", "DIN 2014", "Avenir Next Condensed", "Helvetica Neue Condensed", "Roboto Condensed", system-ui, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      letter-spacing: .04em;
     }
 
-    .target-wrap {
-      display: grid;
-      gap: 10px;
-    }
-
-    .target-time {
-      font-size: clamp(30px, 8vw, 60px);
-      font-weight: 700;
+    .clock {
+      font-size: clamp(40px, 12vw, 84px);
       line-height: 1;
+      font-weight: 800;
+      text-align: center;
+      margin: 8px 0 2px;
     }
 
-    .status {
-      font-size: 15px;
-      line-height: 1.6;
+    .date {
       color: var(--muted);
       text-align: center;
-      margin-top: 8px;
+      font-size: 14px;
+      margin-bottom: 8px;
     }
 
-    .diff {
-      font-size: clamp(36px, 9vw, 72px);
-      font-weight: 800;
-      line-height: 1.05;
-      margin: 8px 0 6px;
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
     }
 
-    .diff.positive { color: var(--bad); }
-    .diff.negative { color: var(--good); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+      background: var(--panel);
+    }
 
-    .summary {
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: rgba(255,255,255,0.02);
+    }
+
+    td input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #090909;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    tr.active {
+      background: rgba(125, 211, 252, 0.10);
+    }
+
+    tr.best {
+      outline: 2px solid rgba(125, 211, 252, 0.35);
+      outline-offset: -2px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #191919;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .summary-grid {
       display: grid;
       gap: 12px;
     }
 
     .summary-card {
-      border-radius: 16px;
-      padding: 14px;
       background: var(--panel-2);
       border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
     }
 
     .summary-label {
-      font-size: 12px;
       color: var(--muted);
-      letter-spacing: 0.08em;
+      font-size: 12px;
+      letter-spacing: .08em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
 
     .summary-value {
       font-size: 18px;
-      line-height: 1.45;
+      line-height: 1.5;
+    }
+
+    .diff {
+      font-size: clamp(34px, 9vw, 68px);
+      line-height: 1.05;
+      font-weight: 800;
+      margin: 6px 0 10px;
+      text-align: center;
+    }
+
+    .diff.positive { color: var(--bad); }
+    .diff.negative { color: var(--good); }
+
+    .status {
+      color: var(--muted);
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.6;
     }
 
     .footer-note {
       color: var(--muted);
-      font-size: 13px;
       text-align: center;
-      padding: 0 18px 18px;
+      font-size: 13px;
+      padding: 0 16px 18px;
     }
   </style>
 </head>
@@ -253,62 +301,78 @@
   <main class="app">
     <header class="hero">
       <p class="eyebrow">Event Timekeeper</p>
-
-
+      <h1>タイムスケジュール比較</h1>
+      <p class="subtitle">表形式で予定時刻を入力し、現在時刻に最も近い行を自動で強調表示します。スマホでもPCでも見やすいタイムキーパー向け画面です。</p>
     </header>
 
     <section class="content">
-      <div class="grid">
-        <section class="panel">
-          <h2 class="panel-title">Current Time</h2>
-          <div class="time-display">
-            <div id="nowTime" class="now-time">--:--:--</div>
-            <div id="nowDate" class="date-line">----</div>
-          </div>
-        </section>
-
-        <section class="panel">
-          <h2 class="panel-title">Target Time</h2>
-          <div class="input-row">
-            <div>
-              <label for="targetTime">入力時刻</label>
-              <input id="targetTime" type="time" step="1" inputmode="numeric" />
-            </div>
-            <div class="buttons">
-              <button id="startBtn" class="primary" type="button">開始</button>
-              <button id="resetBtn" type="button">停止</button>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <section class="panel target-wrap">
-        <h2 class="panel-title">Difference</h2>
-        <div id="diff" class="time-display diff">--:--:--</div>
-        <div id="targetDisplay" class="time-display target-time">--:--:--</div>
-        <div id="status" class="status">時刻を入力して「開始」を押してください。</div>
+      <section class="panel">
+        <h2 class="panel-title">Current Time</h2>
+        <div id="nowTime" class="time-display clock">--:--:--</div>
+        <div id="nowDate" class="date">----</div>
+        <div id="bestDiff" class="time-display diff">--:--:--</div>
+        <div id="bestStatus" class="status">スケジュールを入力してください。</div>
       </section>
 
-      <section class="summary">
+      <section class="panel">
+        <h2 class="panel-title">Schedule Table</h2>
+        <div class="field">
+          <label for="scheduleName">スケジュール名</label>
+          <input id="scheduleName" type="text" placeholder="例: 本番タイムスケジュール" />
+        </div>
+        <div class="field">
+          <label for="scheduleNote">メモ</label>
+          <textarea id="scheduleNote" placeholder="例: 5分前にアナウンス、転換は短め"></textarea>
+        </div>
+        <div class="buttons">
+          <button id="addRowBtn" class="primary" type="button">行を追加</button>
+          <button id="sampleBtn" type="button">サンプル入力</button>
+        </div>
+      </section>
+
+      <section class="panel" style="grid-column: 1 / -1;">
+        <h2 class="panel-title">Time Schedule</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30%;">項目</th>
+                <th style="width: 18%;">時刻</th>
+                <th style="width: 24%;">差分</th>
+                <th style="width: 28%;">メモ</th>
+                <th style="width: 10%;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="summary-grid" style="grid-column: 1 / -1;">
         <div class="summary-card">
-          <div class="summary-label">Created by Kumapuni</div>
+          <div class="summary-label">現在時刻に最も近い予定</div>
+          <div id="closestName" class="summary-value">--</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">比較結果</div>
+          <div id="closestDetail" class="summary-value">--</div>
         </div>
       </section>
     </section>
 
+    <p class="footer-note">黒背景・DIN Next優先・GitHub Pages 対応の静的Webアプリです。</p>
   </main>
 
   <script>
     const nowTimeEl = document.getElementById('nowTime');
     const nowDateEl = document.getElementById('nowDate');
-    const targetInput = document.getElementById('targetTime');
-    const targetDisplayEl = document.getElementById('targetDisplay');
-    const diffEl = document.getElementById('diff');
-    const statusEl = document.getElementById('status');
-    const startBtn = document.getElementById('startBtn');
-    const resetBtn = document.getElementById('resetBtn');
-
-    let timer = null;
+    const bestDiffEl = document.getElementById('bestDiff');
+    const bestStatusEl = document.getElementById('bestStatus');
+    const scheduleBody = document.getElementById('scheduleBody');
+    const closestNameEl = document.getElementById('closestName');
+    const closestDetailEl = document.getElementById('closestDetail');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
 
     const pad = (n) => String(n).padStart(2, '0');
 
@@ -318,14 +382,11 @@
 
     function formatDate(date) {
       return date.toLocaleDateString('ja-JP', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        weekday: 'long'
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'
       });
     }
 
-    function formatDuration(ms) {
+    function formatDiff(ms) {
       const total = Math.floor(Math.abs(ms) / 1000);
       const hours = Math.floor(total / 3600);
       const minutes = Math.floor((total % 3600) / 60);
@@ -333,13 +394,48 @@
       return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
 
-    function getTargetDate(now) {
-      const value = targetInput.value;
+    function parseTimeValue(value, baseDate = new Date()) {
       if (!value) return null;
-      const [h, m, s = '0'] = value.split(':').map(Number);
-      const target = new Date(now);
-      target.setHours(h, m, Number(s), 0);
-      return target;
+      const parts = value.split(':').map(Number);
+      if (parts.length < 2 || Number.isNaN(parts[0]) || Number.isNaN(parts[1])) return null;
+      const [h, m, s = 0] = parts;
+      const d = new Date(baseDate);
+      d.setHours(h, m, s, 0);
+      return d;
+    }
+
+    function rowTemplate({ name = '', time = '', note = '' } = {}) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="row-name" type="text" placeholder="例: 開始" value="${escapeHtml(name)}"></td>
+        <td><input class="row-time time-display" type="time" step="1" value="${escapeHtml(time)}"></td>
+        <td class="row-diff time-display">--</td>
+        <td><input class="row-note" type="text" placeholder="メモ" value="${escapeHtml(note)}"></td>
+        <td><button class="row-remove" type="button">削除</button></td>
+      `;
+      tr.querySelector('.row-remove').addEventListener('click', () => {
+        tr.remove();
+        update();
+      });
+      tr.querySelectorAll('input').forEach((el) => el.addEventListener('input', update));
+      return tr;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function addRow(data) {
+      scheduleBody.appendChild(rowTemplate(data));
+    }
+
+    function getRows() {
+      return [...scheduleBody.querySelectorAll('tr')];
     }
 
     function update() {
@@ -347,57 +443,81 @@
       nowTimeEl.textContent = formatClock(now);
       nowDateEl.textContent = formatDate(now);
 
-      const target = getTargetDate(now);
-      if (!target) {
-        diffEl.textContent = '--:--:--';
-        diffEl.className = 'time-display diff';
-        targetDisplayEl.textContent = '--:--:--';
-        statusEl.textContent = '時刻を入力して「開始」を押してください。';
-        return;
-      }
+      const rows = getRows();
+      let bestRow = null;
+      let bestAbs = Infinity;
+      let bestSigned = 0;
+      let bestLabel = '--';
 
-      targetDisplayEl.textContent = formatClock(target);
+      rows.forEach((row) => {
+        const name = row.querySelector('.row-name').value.trim();
+        const timeInput = row.querySelector('.row-time').value;
+        const diffCell = row.querySelector('.row-diff');
+        row.classList.remove('active', 'best');
 
-      const diffMs = now - target;
-      const formatted = formatDuration(diffMs);
+        const target = parseTimeValue(timeInput, now);
+        if (!target) {
+          diffCell.textContent = '--';
+          return;
+        }
 
-      if (diffMs > 0) {
-        diffEl.textContent = `+ ${formatted}`;
-        diffEl.className = 'time-display diff positive';
-        statusEl.textContent = '現在時刻が入力時刻を過ぎています。';
-      } else if (diffMs < 0) {
-        diffEl.textContent = `- ${formatted}`;
-        diffEl.className = 'time-display diff negative';
-        statusEl.textContent = '現在時刻はまだ入力時刻前です。';
+        const diffMs = now.getTime() - target.getTime();
+        const abs = Math.abs(diffMs);
+        const diffText = `${diffMs >= 0 ? '+' : '-'} ${formatDiff(diffMs)}`;
+        diffCell.textContent = diffText;
+        diffCell.style.color = diffMs >= 0 ? 'var(--bad)' : 'var(--good)';
+
+        if (abs < bestAbs) {
+          bestAbs = abs;
+          bestSigned = diffMs;
+          bestRow = row;
+          bestLabel = `${name || '（無題）'} / ${timeInput}`;
+        }
+      });
+
+      if (bestRow) {
+        bestRow.classList.add('active', 'best');
+        const timeInput = bestRow.querySelector('.row-time').value;
+        const name = bestRow.querySelector('.row-name').value.trim() || '（無題）';
+        const target = parseTimeValue(timeInput, now);
+        const diffText = bestSigned >= 0 ? `+ ${formatDiff(bestSigned)}` : `- ${formatDiff(bestSigned)}`;
+
+        bestDiffEl.textContent = diffText;
+        bestDiffEl.className = `time-display diff ${bestSigned >= 0 ? 'positive' : 'negative'}`;
+        bestStatusEl.textContent = bestSigned >= 0
+          ? '現在時刻は、その予定時刻を過ぎています。'
+          : '現在時刻は、その予定時刻より前です。';
+        closestNameEl.textContent = `${name} / ${timeInput}`;
+        closestDetailEl.textContent = `現在時刻との差分: ${diffText}（${bestSigned >= 0 ? '遅れ' : '先行'}）`;
       } else {
-        diffEl.textContent = '± 00:00:00';
-        diffEl.className = 'time-display diff';
-        statusEl.textContent = '現在時刻と入力時刻が一致しています。';
+        bestDiffEl.textContent = '--:--:--';
+        bestDiffEl.className = 'time-display diff';
+        bestStatusEl.textContent = 'スケジュールを入力してください。';
+        closestNameEl.textContent = '--';
+        closestDetailEl.textContent = '--';
       }
     }
 
-    function start() {
-      stop();
+    addRowBtn.addEventListener('click', () => {
+      addRow();
       update();
-      timer = window.setInterval(update, 1000);
-    }
-
-    function stop() {
-      if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
-      }
-      statusEl.textContent = '停止中です。';
-    }
-
-    startBtn.addEventListener('click', start);
-    resetBtn.addEventListener('click', stop);
-    targetInput.addEventListener('change', update);
-    targetInput.addEventListener('input', () => {
-      if (timer !== null) update();
     });
 
+    sampleBtn.addEventListener('click', () => {
+      scheduleBody.innerHTML = '';
+      [
+        { name: '開場', time: '09:30:00', note: '受付開始' },
+        { name: '開始', time: '10:00:00', note: '本番スタート' },
+        { name: '休憩', time: '10:30:00', note: '5分間' },
+        { name: '終了', time: '11:00:00', note: '撤収案内' },
+      ].forEach(addRow);
+      update();
+    });
+
+    addRow({ name: '開始', time: '10:00:00', note: 'サンプル' });
+    addRow({ name: '挨拶', time: '10:05:00', note: '' });
     update();
+    setInterval(update, 1000);
   </script>
 </body>
 </html>
