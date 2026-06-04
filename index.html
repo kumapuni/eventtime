@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Event Timekeeper</title>
-  <meta name="description" content="タイムスケジュールを入力して、現在時刻に最も近い予定を比較表示するWebアプリ" />
+  <meta name="description" content="タイムスケジュールを入力して、次の予定を表示するWebアプリ" />
   <style>
     :root {
       color-scheme: dark;
@@ -186,6 +186,37 @@
       margin-bottom: 8px;
     }
 
+    .next-box {
+      margin: 12px auto 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      max-width: 520px;
+      text-align: center;
+    }
+
+    .next-label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .next-value {
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .next-time {
+      margin-top: 4px;
+      color: var(--accent);
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: 700;
+    }
+
     .table-wrap {
       overflow-x: auto;
       border: 1px solid var(--line);
@@ -224,26 +255,10 @@
       font-size: 15px;
     }
 
-    tr.active {
-      background: rgba(125, 211, 252, 0.10);
-    }
-
     tr.best {
       outline: 2px solid rgba(125, 211, 252, 0.35);
       outline-offset: -2px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: #191919;
-      border: 1px solid var(--line);
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
+      background: rgba(125, 211, 252, 0.08);
     }
 
     .summary-grid {
@@ -302,7 +317,7 @@
     <header class="hero">
       <p class="eyebrow">Event Timekeeper</p>
       <h1>タイムスケジュール比較</h1>
-      <p class="subtitle">表形式で予定時刻を入力し、現在時刻に最も近い行を自動で強調表示します。スマホでもPCでも見やすいタイムキーパー向け画面です。</p>
+      <p class="subtitle">表形式で予定時刻を入力し、現在時刻に最も近い未来の予定を自動で強調表示します。</p>
     </header>
 
     <section class="content">
@@ -310,6 +325,11 @@
         <h2 class="panel-title">Current Time</h2>
         <div id="nowTime" class="time-display clock">--:--:--</div>
         <div id="nowDate" class="date">----</div>
+        <div class="next-box">
+          <div class="next-label">Next Schedule</div>
+          <div id="nextName" class="next-value">--</div>
+          <div id="nextTime" class="next-time">--:--:--</div>
+        </div>
         <div id="bestDiff" class="time-display diff">--:--:--</div>
         <div id="bestStatus" class="status">スケジュールを入力してください。</div>
       </section>
@@ -350,7 +370,7 @@
 
       <section class="summary-grid" style="grid-column: 1 / -1;">
         <div class="summary-card">
-          <div class="summary-label">現在時刻に最も近い予定</div>
+          <div class="summary-label">現在時刻に最も近い未来の予定</div>
           <div id="closestName" class="summary-value">--</div>
         </div>
         <div class="summary-card">
@@ -366,6 +386,8 @@
   <script>
     const nowTimeEl = document.getElementById('nowTime');
     const nowDateEl = document.getElementById('nowDate');
+    const nextNameEl = document.getElementById('nextName');
+    const nextTimeEl = document.getElementById('nextTime');
     const bestDiffEl = document.getElementById('bestDiff');
     const bestStatusEl = document.getElementById('bestStatus');
     const scheduleBody = document.getElementById('scheduleBody');
@@ -404,6 +426,15 @@
       return d;
     }
 
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
     function rowTemplate({ name = '', time = '', note = '' } = {}) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -419,15 +450,6 @@
       });
       tr.querySelectorAll('input').forEach((el) => el.addEventListener('input', update));
       return tr;
-    }
-
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
     }
 
     function addRow(data) {
@@ -448,16 +470,20 @@
       let bestAbs = Infinity;
       let bestSigned = 0;
       let bestLabel = '--';
+      let nextRow = null;
+      let nextDiff = Infinity;
+      let nextSigned = 0;
 
       rows.forEach((row) => {
         const name = row.querySelector('.row-name').value.trim();
         const timeInput = row.querySelector('.row-time').value;
         const diffCell = row.querySelector('.row-diff');
-        row.classList.remove('active', 'best');
+        row.classList.remove('best');
 
         const target = parseTimeValue(timeInput, now);
         if (!target) {
           diffCell.textContent = '--';
+          diffCell.style.color = 'var(--muted)';
           return;
         }
 
@@ -467,7 +493,13 @@
         diffCell.textContent = diffText;
         diffCell.style.color = diffMs >= 0 ? 'var(--bad)' : 'var(--good)';
 
-        if (abs < bestAbs) {
+        if (diffMs < 0 && abs < nextDiff) {
+          nextDiff = abs;
+          nextSigned = diffMs;
+          nextRow = row;
+        }
+
+        if (diffMs < 0 && abs < bestAbs) {
           bestAbs = abs;
           bestSigned = diffMs;
           bestRow = row;
@@ -475,24 +507,31 @@
         }
       });
 
+      if (nextRow) {
+        nextRow.classList.add('best');
+        const nextName = nextRow.querySelector('.row-name').value.trim() || '（無題）';
+        const nextTime = nextRow.querySelector('.row-time').value;
+        nextNameEl.textContent = nextName;
+        nextTimeEl.textContent = nextTime;
+      } else {
+        nextNameEl.textContent = '--';
+        nextTimeEl.textContent = '--:--:--';
+      }
+
       if (bestRow) {
-        bestRow.classList.add('active', 'best');
-        const timeInput = bestRow.querySelector('.row-time').value;
         const name = bestRow.querySelector('.row-name').value.trim() || '（無題）';
-        const target = parseTimeValue(timeInput, now);
-        const diffText = bestSigned >= 0 ? `+ ${formatDiff(bestSigned)}` : `- ${formatDiff(bestSigned)}`;
+        const timeInput = bestRow.querySelector('.row-time').value;
+        const diffText = `- ${formatDiff(bestSigned)}`;
 
         bestDiffEl.textContent = diffText;
-        bestDiffEl.className = `time-display diff ${bestSigned >= 0 ? 'positive' : 'negative'}`;
-        bestStatusEl.textContent = bestSigned >= 0
-          ? '現在時刻は、その予定時刻を過ぎています。'
-          : '現在時刻は、その予定時刻より前です。';
+        bestDiffEl.className = 'time-display diff negative';
+        bestStatusEl.textContent = '現在時刻は、その予定時刻より前です。';
         closestNameEl.textContent = `${name} / ${timeInput}`;
-        closestDetailEl.textContent = `現在時刻との差分: ${diffText}（${bestSigned >= 0 ? '遅れ' : '先行'}）`;
+        closestDetailEl.textContent = `現在時刻との差分: ${diffText}（未来の予定のうち最も近いもの）`;
       } else {
         bestDiffEl.textContent = '--:--:--';
         bestDiffEl.className = 'time-display diff';
-        bestStatusEl.textContent = 'スケジュールを入力してください。';
+        bestStatusEl.textContent = '未来の予定がありません。';
         closestNameEl.textContent = '--';
         closestDetailEl.textContent = '--';
       }
