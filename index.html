@@ -172,7 +172,7 @@
     }
 
     .clock {
-      font-size: clamp(40px, 12vw, 120px);
+      font-size: clamp(40px, 12vw, 84px);
       line-height: 1;
       font-weight: 800;
       text-align: center;
@@ -316,7 +316,8 @@
   <main class="app">
     <header class="hero">
       <p class="eyebrow">Event Timekeeper</p>
-      <h1>Time Schedule System</h1>
+      <h1>タイムスケジュール比較</h1>
+      <p class="subtitle">表形式で予定時刻を入力し、現在時刻に最も近い未来の予定を自動で強調表示します。</p>
     </header>
 
     <section class="content">
@@ -369,7 +370,7 @@
 
       <section class="summary-grid" style="grid-column: 1 / -1;">
         <div class="summary-card">
-          <div class="summary-label">現在時刻に最も近い未来の予定</div>
+          <div class="summary-label">現在時刻に��も近い未来の予定</div>
           <div id="closestName" class="summary-value">--</div>
         </div>
         <div class="summary-card">
@@ -379,10 +380,11 @@
       </section>
     </section>
 
-    <p class="footer-note">Created by Kumapuni</p>
+    <p class="footer-note">黒背景・DIN Next優先・GitHub Pages 対応の静的Webアプリです。</p>
   </main>
 
   <script>
+    const STORAGE_KEY = 'eventtime-schedule-v1';
     const nowTimeEl = document.getElementById('nowTime');
     const nowDateEl = document.getElementById('nowDate');
     const nextNameEl = document.getElementById('nextName');
@@ -394,6 +396,8 @@
     const closestDetailEl = document.getElementById('closestDetail');
     const addRowBtn = document.getElementById('addRowBtn');
     const sampleBtn = document.getElementById('sampleBtn');
+    const scheduleNameEl = document.getElementById('scheduleName');
+    const scheduleNoteEl = document.getElementById('scheduleNote');
 
     const pad = (n) => String(n).padStart(2, '0');
 
@@ -445,9 +449,13 @@
       `;
       tr.querySelector('.row-remove').addEventListener('click', () => {
         tr.remove();
+        saveState();
         update();
       });
-      tr.querySelectorAll('input').forEach((el) => el.addEventListener('input', update));
+      tr.querySelectorAll('input').forEach((el) => el.addEventListener('input', () => {
+        saveState();
+        update();
+      }));
       return tr;
     }
 
@@ -459,22 +467,48 @@
       return [...scheduleBody.querySelectorAll('tr')];
     }
 
+    function getState() {
+      return {
+        scheduleName: scheduleNameEl.value,
+        scheduleNote: scheduleNoteEl.value,
+        rows: getRows().map((row) => ({
+          name: row.querySelector('.row-name').value,
+          time: row.querySelector('.row-time').value,
+          note: row.querySelector('.row-note').value,
+        }))
+      };
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(getState()));
+    }
+
+    function restoreState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const state = JSON.parse(raw);
+        scheduleNameEl.value = state.scheduleName || '';
+        scheduleNoteEl.value = state.scheduleNote || '';
+        scheduleBody.innerHTML = '';
+        (state.rows || []).forEach(addRow);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     function update() {
       const now = new Date();
       nowTimeEl.textContent = formatClock(now);
       nowDateEl.textContent = formatDate(now);
 
       const rows = getRows();
-      let bestRow = null;
-      let bestAbs = Infinity;
-      let bestSigned = 0;
-      let bestLabel = '--';
       let nextRow = null;
       let nextDiff = Infinity;
       let nextSigned = 0;
 
       rows.forEach((row) => {
-        const name = row.querySelector('.row-name').value.trim();
         const timeInput = row.querySelector('.row-time').value;
         const diffCell = row.querySelector('.row-diff');
         row.classList.remove('best');
@@ -497,13 +531,6 @@
           nextSigned = diffMs;
           nextRow = row;
         }
-
-        if (diffMs < 0 && abs < bestAbs) {
-          bestAbs = abs;
-          bestSigned = diffMs;
-          bestRow = row;
-          bestLabel = `${name || '（無題）'} / ${timeInput}`;
-        }
       });
 
       if (nextRow) {
@@ -512,22 +539,16 @@
         const nextTime = nextRow.querySelector('.row-time').value;
         nextNameEl.textContent = nextName;
         nextTimeEl.textContent = nextTime;
-      } else {
-        nextNameEl.textContent = '--';
-        nextTimeEl.textContent = '--:--:--';
-      }
 
-      if (bestRow) {
-        const name = bestRow.querySelector('.row-name').value.trim() || '（無題）';
-        const timeInput = bestRow.querySelector('.row-time').value;
-        const diffText = `- ${formatDiff(bestSigned)}`;
-
+        const diffText = `- ${formatDiff(nextSigned)}`;
         bestDiffEl.textContent = diffText;
         bestDiffEl.className = 'time-display diff negative';
         bestStatusEl.textContent = '現在時刻は、その予定時刻より前です。';
-        closestNameEl.textContent = `${name} / ${timeInput}`;
+        closestNameEl.textContent = `${nextName} / ${nextTime}`;
         closestDetailEl.textContent = `現在時刻との差分: ${diffText}（未来の予定のうち最も近いもの）`;
       } else {
+        nextNameEl.textContent = '--';
+        nextTimeEl.textContent = '--:--:--';
         bestDiffEl.textContent = '--:--:--';
         bestDiffEl.className = 'time-display diff';
         bestStatusEl.textContent = '未来の予定がありません。';
@@ -536,12 +557,19 @@
       }
     }
 
+    [scheduleNameEl, scheduleNoteEl].forEach((el) => el.addEventListener('input', () => {
+      saveState();
+    }));
+
     addRowBtn.addEventListener('click', () => {
       addRow();
+      saveState();
       update();
     });
 
     sampleBtn.addEventListener('click', () => {
+      scheduleNameEl.value = '本番タイムスケジュール';
+      scheduleNoteEl.value = 'サンプルデータ';
       scheduleBody.innerHTML = '';
       [
         { name: '開場', time: '09:30:00', note: '受付開始' },
@@ -549,11 +577,15 @@
         { name: '休憩', time: '10:30:00', note: '5分間' },
         { name: '終了', time: '11:00:00', note: '撤収案内' },
       ].forEach(addRow);
+      saveState();
       update();
     });
 
-    addRow({ name: '開始', time: '10:00:00', note: 'サンプル' });
-    addRow({ name: '挨拶', time: '10:05:00', note: '' });
+    if (!restoreState()) {
+      addRow({ name: '開始', time: '10:00:00', note: 'サンプル' });
+      addRow({ name: '挨拶', time: '10:05:00', note: '' });
+    }
+
     update();
     setInterval(update, 1000);
   </script>
