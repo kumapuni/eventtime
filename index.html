@@ -172,7 +172,7 @@
     }
 
     .clock {
-      font-size: clamp(40px, 12vw, 84px);
+      font-size: clamp(40px, 12vw, 240px);
       line-height: 1;
       font-weight: 800;
       text-align: center;
@@ -316,8 +316,8 @@
   <main class="app">
     <header class="hero">
       <p class="eyebrow">Event Timekeeper</p>
-      <h1>タイムスケジュール比較</h1>
-      <p class="subtitle">表形式で予定時刻を入力し、現在時刻に最も近い未来の予定を自動で強調表示します。</p>
+      <h1>Event Timetable</h1>
+      <p class="subtitle">Created by Kumapuni</p>
     </header>
 
     <section class="content">
@@ -342,7 +342,7 @@
         </div>
         <div class="field">
           <label for="scheduleNote">メモ</label>
-          <textarea id="scheduleNote" placeholder="例: 5分前にアナウンス、転換は短め"></textarea>
+          <textarea id="scheduleNote" placeholder="例: 現在10分遅れ、5分前にアナウンス、転換は短め"></textarea>
         </div>
         <div class="buttons">
           <button id="addRowBtn" class="primary" type="button">行を追加</button>
@@ -370,7 +370,7 @@
 
       <section class="summary-grid" style="grid-column: 1 / -1;">
         <div class="summary-card">
-          <div class="summary-label">現在時刻に��も近い未来の予定</div>
+          <div class="summary-label">現在時刻に現在も近い未来の予定</div>
           <div id="closestName" class="summary-value">--</div>
         </div>
         <div class="summary-card">
@@ -379,8 +379,6 @@
         </div>
       </section>
     </section>
-
-    <p class="footer-note">黒背景・DIN Next優先・GitHub Pages 対応の静的Webアプリです。</p>
   </main>
 
   <script>
